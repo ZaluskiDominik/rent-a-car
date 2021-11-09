@@ -1,0 +1,8 @@
+services:
+  Tests\:
+    resource: '../tests/'
+    exclude:
+      - '../tests/Unit/'
+      - '../tests/bootstrap.php'
+
+  App\Module\Tenant\Domain\Repository\TenantRepositoryInterface: '@Tests\Fake\Repository\InMemoryTenantRepository'

@@ -1,0 +1,12 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    symfony:
+        container_xml_path: var/cache/dev/App_KernelDevDebugContainer.xml
+    ignoreErrors:
+        - message: '#.*does not accept object\|null#'
+          path: 'tests/*'
+        - message: '#.*is not registered in the container#'
+          path: 'tests/*'

@@ -1,0 +1,11 @@
+tenant_controller:
+  resource: ../../src/API/Tenant/Controller/
+  type: annotation
+
+api_key_controller:
+  resource: ../../src/API/ApiKey/Controller/
+  type: annotation
+
+kernel:
+  resource: ../../src/Kernel.php
+  type: annotation

@@ -1,0 +1,257 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Rent a car API
+  description: API for renting cars
+
+servers:
+  - url: https://api.rent-a-car.local
+
+# For all APIs consumer is authenticated via API key. The only exception are API methods for managing API keys for which Basic Auth is used.
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /cars:
+    get:
+      description: Returns a list of available cars
+      parameters:
+        - name: limit
+          in: query
+          description: Limits the number of returned cars
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: Specifies from which starting position cars should be returned. To start from first car specify 0.
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+  /cars/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      description: Returns a car with specified ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        '404':
+          description: Rental not found
+
+  /tenants:
+    get:
+      description: Returns your account's data
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+        '401':
+          description: Unauthenticated access
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+             $ref: "#/components/schemas/NewTenant"
+      responses:
+        '201':
+          description: New tenant account has been created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+        '401':
+          description: Unauthenticated access
+        '409':
+          description: Account with this email address already exists
+
+  /api_keys:
+    get:
+      description: List your API keys
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKey"
+        '401':
+          description: Unauthenticated access
+    post:
+      description: Create a new API key
+      security:
+      - BasicAuth: []
+      responses:
+        '201':
+          description: API key has been created
+        '401':
+          description: Unauthenticated access
+        '422':
+          description: You have too many API keys to create another one
+
+  /api_keys/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      description: Delete an API key
+      security:
+        - BasicAuth: []
+      responses:
+        '204':
+          description: API key deleted
+        '401':
+          description: Unauthenticated access
+        '404':
+          description: API key not found
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+  schemas:
+    Car:
+      type: object
+      properties:
+        id:
+          type: string
+        model:
+          type: string
+        color:
+          type: string
+        addedAt:
+          type: integer
+          description: Unix timestap when a car was added for cars possible to rent list
+        lastInspectionAt:
+          type: integer
+        pricePerDay:
+          type: number
+        currency:
+          type: string
+          enum: [EUR]
+        availableFrom:
+          type: integer
+          description: Field only present if car is already rented. Unix timestap when a car will be available for rent
+
+    Rental:
+      type: object
+      properties:
+        id:
+          type: string
+        start:
+          type: integer
+        end:
+          type: integer
+        carId:
+          type: string
+        tenantId:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+          enum: [EUR, PLN, CZK]
+      required:
+        - id
+        - start
+        - end
+        - carId
+        - tenantId
+        - price
+        - currency
+
+    CommonPropsTenant:
+      type: object
+      properties:
+        name:
+          type: string
+        surname:
+          type: string
+        zipCode:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+          enum: [DE, PL, CZ, SK]
+        age:
+          type: integer
+        email:
+          type: string
+          format: email
+      required:
+        - name
+        - surname
+        - zipCode
+        - city
+        - country
+        - email
+
+    NewTenant:
+      allOf:
+        - $ref: '#/components/schemas/CommonPropsTenant'
+        - type: object
+          properties:
+            username:
+              type: string
+              format: password
+              description: Used as part of Basic Auth
+            password:
+              type: string
+              format: password
+              description: Used as part of Basic Auth
+          required:
+            - username
+            - password
+
+    Tenant:
+      allOf:
+        - $ref: '#/components/schemas/CommonPropsTenant'
+        - type: object
+          properties:
+            id:
+              type: string
+          required:
+            - id
+
+    ApiKey:
+      type: object
+      properties:
+        key:
+          type: string
+        createdAt:
+          type: integer
+      required:
+       - key
+       - createdAt
